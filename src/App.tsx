@@ -7,6 +7,7 @@ import viteLogo from "/vite.svg";
 import reactLogo from "./assets/react.svg";
 import { API_TOKEN } from "./movies/api";
 import { MovieResponse, PopularMoviesResponse } from "./movies/model";
+import { MoviesTable } from "./movies/Table";
 
 function App() {
   const [movies, setMovies] = useState<MovieResponse[]>([]);
@@ -25,7 +26,7 @@ function App() {
   }, []);
 
   return (
-    <>
+    <main className="dark bg-background text-primary">
       <div>
         <a href="https://vitejs.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -35,25 +36,8 @@ function App() {
         </a>
       </div>
       <h1>Vite + React</h1>
-      <div className="card">
-        {movies.map((movie, index) => {
-          return (
-            <div key={index}>
-              <h1>{movie.title}</h1>
-              <h2>Overview</h2>
-              <p>{movie.overview}</p>
-              <p>Release Date: {movie.release_date}</p>
-              <p>Vote Average: {movie.vote_average}</p>
-              <p>Popularity: {movie.popularity}</p>
-              <img
-                src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                alt={movie.title}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </>
+      <MoviesTable movies={movies} />
+    </main>
   );
 }
 
