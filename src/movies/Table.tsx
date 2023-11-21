@@ -14,6 +14,8 @@ import {
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
 
+import FilterIcon from "/filter.png";
+
 import { Button } from "../components/ui/button";
 import {
   DropdownMenu,
@@ -42,6 +44,7 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
+  console.log("columnFilters:", columnFilters);
   const table = useReactTable({
     data: movies,
     columns: columns,
@@ -58,6 +61,11 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
       columnFilters,
       columnVisibility,
       rowSelection,
+    },
+    filterFns: {
+      // myCustomFilter: (rows, columnIds, filterValue) => {
+      //   // return the filtered rows
+      // },
     },
   });
 
@@ -104,13 +112,22 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="p-4 pl-0">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
                             header.getContext()
-                          )}
+                          )}{" "}
+                      {header.column.getCanFilter() && (
+                        <Button className="bg-transparent dark:bg-background">
+                          <img
+                            src={FilterIcon}
+                            className="h-4 w-4 filter invert"
+                            alt="Filter"
+                          />
+                        </Button>
+                      )}
                     </TableHead>
                   );
                 })}

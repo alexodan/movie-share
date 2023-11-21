@@ -57,24 +57,37 @@ export const columns: ColumnDef<MovieResponse>[] = [
     cell: ({ row }) => (
       <div className="capitalize">{row.getValue("title")}</div>
     ),
+    enableColumnFilter: true,
   },
   {
     accessorKey: "popularity",
-    header: () => <div className="text-right">Popularity</div>,
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Popularity
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
       const popularity = parseFloat(row.getValue("popularity"));
-      return <div className="text-right font-medium">{popularity}</div>;
+      return <div className="font-medium">{popularity}</div>;
+    },
+  },
+  {
+    accessorKey: "vote_average",
+    header: () => <Button variant="ghost">Vote average</Button>,
+    cell: ({ row }) => {
+      const vote_average = parseFloat(row.getValue("vote_average"));
+      return <div className="font-medium">{vote_average}</div>;
     },
   },
   {
     accessorKey: "release_date",
-    header: () => <div className="text-right">Release date</div>,
+    header: () => <Button variant="ghost">Release date</Button>,
     cell: ({ row }) => {
-      return (
-        <div className="text-right font-medium">
-          {row.getValue("release_date")}
-        </div>
-      );
+      return <div className="font-medium">{row.getValue("release_date")}</div>;
     },
   },
   {
@@ -105,5 +118,6 @@ export const columns: ColumnDef<MovieResponse>[] = [
         </DropdownMenu>
       );
     },
+    enableColumnFilter: false,
   },
 ];
