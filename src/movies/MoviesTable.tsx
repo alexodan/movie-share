@@ -7,6 +7,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  Row,
   SortingState,
   useReactTable,
   VisibilityState,
@@ -15,15 +16,14 @@ import { ChevronDown } from "lucide-react";
 import * as React from "react";
 
 import FilterIcon from "/filter.png";
-
-import { Button } from "../components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
-import { Input } from "../components/ui/input";
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -31,7 +31,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../components/ui/table";
+} from "@/components/ui/table";
+import { RangeFilter, RangeFilterPopover } from "@/filters/RangeFilterPopover";
+
 import { columns } from "./columns";
 import { MovieResponse } from "./model";
 
@@ -45,6 +47,7 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
   const [rowSelection, setRowSelection] = React.useState({});
 
   console.log("columnFilters:", columnFilters);
+
   const table = useReactTable({
     data: movies,
     columns: columns,
@@ -56,18 +59,21 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    filterFns: {
+      popularity: (row: Row<MovieResponse>, columnId: string, filterValue) => {
+        console.log("filterFn:", row, columnId, filterValue);
+        return false;
+      },
+    },
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       rowSelection,
     },
-    filterFns: {
-      // myCustomFilter: (rows, columnIds, filterValue) => {
-      //   // return the filtered rows
-      // },
-    },
   });
+
+  const handleFilterChange = (filterName: string, range: RangeFilter) => {};
 
   return (
     <div className="w-full">
@@ -112,7 +118,7 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
                   return (
-                    <TableHead key={header.id} className="p-4 pl-0">
+                    <TableHead key={header.id} className="p-4 pl-0 first:pl-4">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -120,13 +126,18 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
                             header.getContext()
                           )}{" "}
                       {header.column.getCanFilter() && (
-                        <Button className="bg-transparent dark:bg-background">
-                          <img
-                            src={FilterIcon}
-                            className="h-4 w-4 filter invert"
-                            alt="Filter"
-                          />
-                        </Button>
+                        <RangeFilterPopover
+                          filterName={header.column.id}
+                          onFilterChange={handleFilterChange}
+                        >
+                          <Button className="bg-transparent dark:bg-background">
+                            <img
+                              src={FilterIcon}
+                              className="h-4 w-4 filter invert"
+                              alt="Filter"
+                            />
+                          </Button>
+                        </RangeFilterPopover>
                       )}
                     </TableHead>
                   );

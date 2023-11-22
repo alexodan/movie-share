@@ -7,7 +7,7 @@ import viteLogo from "/vite.svg";
 import reactLogo from "./assets/react.svg";
 import { API_TOKEN } from "./movies/api";
 import { MovieResponse, PopularMoviesResponse } from "./movies/model";
-import { MoviesTable } from "./movies/Table";
+import { MoviesTable } from "./movies/MoviesTable";
 
 function App() {
   const [movies, setMovies] = useState<MovieResponse[]>([]);

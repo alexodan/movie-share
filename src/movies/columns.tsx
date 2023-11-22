@@ -1,8 +1,8 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { createColumnHelper } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 
-import { Button } from "../components/ui/button";
-import { Checkbox } from "../components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,11 +10,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
+
 import { MovieResponse } from "./model";
 
-export const columns: ColumnDef<MovieResponse>[] = [
-  {
+const columnHelper = createColumnHelper<MovieResponse>();
+
+export const columns = [
+  columnHelper.display({
     id: "select",
     header: ({ table }) => (
       <Checkbox
@@ -35,14 +38,12 @@ export const columns: ColumnDef<MovieResponse>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
-  },
-  {
-    accessorKey: "id",
-    header: "ID",
-    cell: ({ row }) => <div>{row.getValue("id")}</div>,
-  },
-  {
-    accessorKey: "title",
+  }),
+  columnHelper.accessor("id", {
+    header: () => <span className="px-4">ID</span>,
+    cell: info => <div>{info.getValue()}</div>,
+  }),
+  columnHelper.accessor("title", {
     header: ({ column }) => {
       return (
         <Button
@@ -58,9 +59,8 @@ export const columns: ColumnDef<MovieResponse>[] = [
       <div className="capitalize">{row.getValue("title")}</div>
     ),
     enableColumnFilter: true,
-  },
-  {
-    accessorKey: "popularity",
+  }),
+  columnHelper.accessor("popularity", {
     header: ({ column }) => (
       <Button
         variant="ghost"
@@ -74,23 +74,30 @@ export const columns: ColumnDef<MovieResponse>[] = [
       const popularity = parseFloat(row.getValue("popularity"));
       return <div className="font-medium">{popularity}</div>;
     },
-  },
-  {
-    accessorKey: "vote_average",
-    header: () => <Button variant="ghost">Vote average</Button>,
+    filterFn: () => true,
+  }),
+  columnHelper.accessor("vote_average", {
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Vote average
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
       const vote_average = parseFloat(row.getValue("vote_average"));
       return <div className="font-medium">{vote_average}</div>;
     },
-  },
-  {
-    accessorKey: "release_date",
+  }),
+  columnHelper.accessor("release_date", {
     header: () => <Button variant="ghost">Release date</Button>,
     cell: ({ row }) => {
       return <div className="font-medium">{row.getValue("release_date")}</div>;
     },
-  },
-  {
+  }),
+  columnHelper.display({
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
@@ -119,5 +126,5 @@ export const columns: ColumnDef<MovieResponse>[] = [
       );
     },
     enableColumnFilter: false,
-  },
+  }),
 ];
