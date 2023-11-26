@@ -7,7 +7,6 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  Row,
   SortingState,
   useReactTable,
   VisibilityState,
@@ -15,7 +14,6 @@ import {
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
 
-import FilterIcon from "/filter.png";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,7 +21,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -32,10 +29,57 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RangeFilter, RangeFilterPopover } from "@/filters/RangeFilterPopover";
+import { RangeFilter } from "@/filters/RangeFilterPopover";
+import { TextFilter } from "@/filters/TextFilterPopover";
 
+import { getColumnFilter } from "./ColumnFilter";
 import { columns } from "./columns";
 import { MovieResponse } from "./model";
+
+// TODO: which filters belong to type "string" category (e.g. 'title')
+const updateUrl = (filterName: string, value: RangeFilter | TextFilter) => {
+  const currentSearch = window.location.search;
+  const url = new URLSearchParams(currentSearch);
+  console.log(filterName, value);
+  // unless filter is already applied
+  if (!url.get(filterName)) {
+    if (typeof value === "string") {
+      url.append(filterName, `${value}`);
+    } else if ("min" in value && "max" in value) {
+      const min = parseFloat(value.min ?? "");
+      const max = parseFloat(value.max ?? "");
+      if (Number.isFinite(min)) {
+        url.append(filterName, `min:${min}`);
+      }
+      if (Number.isFinite(max)) {
+        url.append(filterName, `max:${max}`);
+      }
+    }
+  } else {
+    // need to update it
+    if (typeof value === "string") {
+      url.set(filterName, `${value}`);
+    } else if ("min" in value && "max" in value) {
+      url.delete(filterName);
+      const min = parseFloat(value.min ?? "");
+      const max = parseFloat(value.max ?? "");
+      if (Number.isFinite(min)) {
+        url.set(filterName, `min:${min}`);
+      }
+      if (Number.isFinite(max)) {
+        url.append(filterName, `max:${max}`);
+      }
+    }
+  }
+  window.history.pushState(null, "", `?${url.toString()}`);
+};
+
+const getFilterType = (filterName: string) => {
+  if (filterName === "vote_average") {
+    return "range";
+  }
+  return "text";
+};
 
 export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -46,7 +90,7 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  console.log("columnFilters:", columnFilters);
+  // console.log("columnFilters:", columnFilters);
 
   const table = useReactTable({
     data: movies,
@@ -59,12 +103,6 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
-    filterFns: {
-      popularity: (row: Row<MovieResponse>, columnId: string, filterValue) => {
-        console.log("filterFn:", row, columnId, filterValue);
-        return false;
-      },
-    },
     state: {
       sorting,
       columnFilters,
@@ -73,19 +111,51 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
     },
   });
 
-  const handleFilterChange = (filterName: string, range: RangeFilter) => {};
+  const handleFilterChange = (
+    filterName: string,
+    value: RangeFilter | TextFilter
+  ) => {
+    console.log("handleFilterChange", filterName, value);
+    if (typeof value === "string") {
+      if (value) {
+        table.getColumn(filterName)?.setFilterValue(value);
+      }
+    } else if ("min" in value && "max" in value) {
+      console.log("setting range filter value", value);
+      table.getColumn(filterName)?.setFilterValue({
+        min: value.min ?? 0,
+        max: value.max ?? Number.POSITIVE_INFINITY,
+      });
+    }
+    updateUrl(filterName, value);
+  };
+
+  React.useEffect(() => {
+    // parse url
+    // apply filters
+    const currentSearch = window.location.search;
+    const url = new URLSearchParams(currentSearch);
+    console.log("start applying filters..........");
+    for (const [name, value] of url.entries()) {
+      const filterType = getFilterType(name);
+      if (filterType === "range") {
+        table
+          .getColumn(name)
+          ?.setFilterValue((prev: RangeFilter | undefined) => ({
+            ...prev,
+            [value.split(":")[0]]: parseFloat(value.split(":")[1]),
+          }));
+      } else if (filterType === "text") {
+        console.log("filterType string:", value);
+        table.getColumn(name)?.setFilterValue(value);
+      }
+    }
+    console.log("finished applying filters..........");
+  }, [table]);
 
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter titles..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={event =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
@@ -117,6 +187,7 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
+                  console.log(header.column.id, header.column.getFilterValue());
                   return (
                     <TableHead key={header.id} className="p-4 pl-0 first:pl-4">
                       {header.isPlaceholder
@@ -125,20 +196,15 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
                             header.column.columnDef.header,
                             header.getContext()
                           )}{" "}
-                      {header.column.getCanFilter() && (
-                        <RangeFilterPopover
-                          filterName={header.column.id}
-                          onFilterChange={handleFilterChange}
-                        >
-                          <Button className="bg-transparent dark:bg-background">
-                            <img
-                              src={FilterIcon}
-                              className="h-4 w-4 filter invert"
-                              alt="Filter"
-                            />
-                          </Button>
-                        </RangeFilterPopover>
-                      )}
+                      {header.column.getCanFilter() &&
+                        getColumnFilter({
+                          filterName: header.column.id,
+                          filterType:
+                            // @ts-expect-error need to figure out the declare module part
+                            header.column.columnDef.meta?.filterType as string,
+                          filterValue: header.column.getFilterValue(),
+                          handleFilterChange,
+                        })}
                     </TableHead>
                   );
                 })}

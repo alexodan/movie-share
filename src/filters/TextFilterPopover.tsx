@@ -17,17 +17,17 @@ import {
 
 import { usePopover } from "./usePopover";
 
-export type RangeFilter = { min: string | undefined; max: string | undefined };
-
 type Props = {
   filterName: string;
   filterType: string;
-  filterValue: RangeFilter;
-  onFilterChange: (name: string, value: RangeFilter) => void;
+  filterValue: string;
+  onFilterChange: (name: string, value: TextFilter) => void;
   filterProps?: ComponentPropsWithoutRef<"input">;
 };
 
-export function RangeFilterPopover({
+export type TextFilter = string;
+
+export function TextFilterPopover({
   filterName,
   filterType,
   filterValue,
@@ -36,32 +36,28 @@ export function RangeFilterPopover({
   children,
 }: PropsWithChildren<Props>) {
   const [isOpen, setIsOpen] = useState(false);
-  const [range, setRange] = useState<RangeFilter>({
-    min: "",
-    max: "",
-  });
+  const [value, setValue] = useState<string | null>(null);
+
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   usePopover({ popoverRef: ref, buttonRef, setIsOpen });
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRange(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setValue(e.target.value);
   };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      onFilterChange(filterName, range);
+      onFilterChange(filterName, value ?? "");
     }
   };
 
   useEffect(() => {
-    if (filterType === "range") {
-      setRange(filterValue ? filterValue : { min: "", max: "" });
+    console.log("inside textFilterPopover", filterName, filterValue);
+    if (filterType === "text") {
+      setValue(filterValue);
     }
-  }, [filterType, filterValue]);
+  }, [filterType, filterValue, filterName]);
 
   return (
     <Popover onOpenChange={handleOpenChange} open={isOpen}>
@@ -77,33 +73,18 @@ export function RangeFilterPopover({
           <div className="space-y-2">
             <h4 className="font-medium leading-none">{filterName}</h4>
             <p className="text-muted-foreground">
-              Set the range for the {filterName}.
+              Set the value to search for the {filterName}.
             </p>
           </div>
           <div className="grid gap-2">
             <div className="grid grid-cols-3 items-center gap-4">
-              <Label htmlFor="width">Min.</Label>
+              <Label htmlFor="width">Value</Label>
               <Input
                 id="width"
                 className="col-span-2 h-8"
-                name="min"
-                type="number" // maybe text is more versatile, or just pass the prop right? 🤪
-                value={range.min}
+                name="value"
                 onChange={handleInput}
-                {...filterProps}
-              />
-            </div>
-          </div>
-          <div className="grid gap-2">
-            <div className="grid grid-cols-3 items-center gap-4">
-              <Label htmlFor="width">Max.</Label>
-              <Input
-                id="width"
-                className="col-span-2 h-8"
-                name="max"
-                type="number"
-                value={range.max}
-                onChange={handleInput}
+                value={value ?? ""}
                 {...filterProps}
               />
             </div>
@@ -121,7 +102,7 @@ export function RangeFilterPopover({
               </Button>
               <Button
                 onClick={() => {
-                  setRange({ min: "", max: "" });
+                  setValue(null);
                   handleOpenChange(false);
                   setIsOpen(false);
                 }}

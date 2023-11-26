@@ -1,4 +1,5 @@
-import { createColumnHelper } from "@tanstack/react-table";
+import { rankItem } from "@tanstack/match-sorter-utils";
+import { createColumnHelper, FilterFn, Row } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,43 @@ import {
 import { MovieResponse } from "./model";
 
 const columnHelper = createColumnHelper<MovieResponse>();
+
+type Range = {
+  min: string;
+  max: string;
+};
+
+export const rangeFilter: FilterFn<MovieResponse> = (
+  row: Row<MovieResponse>,
+  columnId: string,
+  value: Range
+) => {
+  const item = row.getValue<number>(columnId);
+  if (
+    Number.isFinite(parseFloat(value.min)) &&
+    Number.isFinite(parseFloat(value.max))
+  ) {
+    return item >= parseFloat(value.min) && item <= parseFloat(value.max);
+  } else if (Number.isFinite(parseFloat(value.min))) {
+    return item >= parseFloat(value.min);
+  } else if (Number.isFinite(parseFloat(value.max))) {
+    return item <= parseFloat(value.max);
+  }
+  return true;
+};
+
+export const textFilter: FilterFn<MovieResponse> = (
+  row: Row<MovieResponse>,
+  columnId: string,
+  value: string,
+  addMeta
+) => {
+  const itemRank = rankItem(row.getValue(columnId), value);
+  // Store the ranking info
+  addMeta(itemRank);
+  // Return if the item should be filtered in/out
+  return itemRank.passed;
+};
 
 export const columns = [
   columnHelper.display({
@@ -58,7 +96,10 @@ export const columns = [
     cell: ({ row }) => (
       <div className="capitalize">{row.getValue("title")}</div>
     ),
-    enableColumnFilter: true,
+    filterFn: textFilter,
+    meta: {
+      filterType: "text",
+    },
   }),
   columnHelper.accessor("popularity", {
     header: ({ column }) => (
@@ -74,7 +115,10 @@ export const columns = [
       const popularity = parseFloat(row.getValue("popularity"));
       return <div className="font-medium">{popularity}</div>;
     },
-    filterFn: () => true,
+    filterFn: rangeFilter,
+    meta: {
+      filterType: "range",
+    },
   }),
   columnHelper.accessor("vote_average", {
     header: ({ column }) => (
@@ -89,6 +133,10 @@ export const columns = [
     cell: ({ row }) => {
       const vote_average = parseFloat(row.getValue("vote_average"));
       return <div className="font-medium">{vote_average}</div>;
+    },
+    filterFn: rangeFilter,
+    meta: {
+      filterType: "range",
     },
   }),
   columnHelper.accessor("release_date", {
