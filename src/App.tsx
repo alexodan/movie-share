@@ -26,7 +26,7 @@ function App() {
   }, []);
 
   return (
-    <main className="dark bg-background text-primary">
+    <main className="dark bg-background text-primary p-4">
       <div>
         <a href="https://vitejs.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
