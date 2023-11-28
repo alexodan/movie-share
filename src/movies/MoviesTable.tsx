@@ -40,7 +40,6 @@ import { MovieResponse } from "./model";
 const updateUrl = (filterName: string, value: RangeFilter | TextFilter) => {
   const currentSearch = window.location.search;
   const url = new URLSearchParams(currentSearch);
-  console.log(filterName, value);
   // unless filter is already applied
   if (!url.get(filterName)) {
     if (typeof value === "string") {
@@ -115,13 +114,11 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
     filterName: string,
     value: RangeFilter | TextFilter
   ) => {
-    console.log("handleFilterChange", filterName, value);
     if (typeof value === "string") {
       if (value) {
         table.getColumn(filterName)?.setFilterValue(value);
       }
     } else if ("min" in value && "max" in value) {
-      console.log("setting range filter value", value);
       table.getColumn(filterName)?.setFilterValue({
         min: value.min ?? 0,
         max: value.max ?? Number.POSITIVE_INFINITY,
@@ -146,7 +143,6 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
             [value.split(":")[0]]: parseFloat(value.split(":")[1]),
           }));
       } else if (filterType === "text") {
-        console.log("filterType string:", value);
         table.getColumn(name)?.setFilterValue(value);
       }
     }
@@ -187,7 +183,6 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
-                  console.log(header.column.id, header.column.getFilterValue());
                   return (
                     <TableHead key={header.id} className="p-4 pl-0 first:pl-4">
                       {header.isPlaceholder

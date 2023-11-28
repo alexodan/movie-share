@@ -53,7 +53,6 @@ export function TextFilterPopover({
   };
 
   useEffect(() => {
-    console.log("inside textFilterPopover", filterName, filterValue);
     if (filterType === "text") {
       setValue(filterValue);
     }
