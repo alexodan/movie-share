@@ -2,13 +2,15 @@ import FilterIcon from "/filter.png";
 import { Button } from "@/components/ui/button";
 import { RangeFilter, RangeFilterPopover } from "@/filters/RangeFilterPopover";
 import { TextFilter, TextFilterPopover } from "@/filters/TextFilterPopover";
+import { FilterType } from "@/filters/types";
 
 // TODO: rename/refactor
 type FilterFor = {
   filterName: string;
-  filterType: string;
+  filterType: FilterType | undefined;
   filterValue: unknown;
   handleFilterChange: (
+    filterType: FilterType,
     filterName: string,
     value: RangeFilter | TextFilter
   ) => void;

@@ -15,15 +15,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+import { FilterType } from "./types";
 import { usePopover } from "./usePopover";
 
 export type RangeFilter = { min: string | undefined; max: string | undefined };
 
 type Props = {
   filterName: string;
-  filterType: string;
+  filterType: FilterType;
   filterValue: RangeFilter;
-  onFilterChange: (name: string, value: RangeFilter) => void;
+  // TODO: filterType as enum
+  onFilterChange: (
+    filterType: FilterType,
+    name: string,
+    value: RangeFilter
+  ) => void;
   filterProps?: ComponentPropsWithoutRef<"input">;
 };
 
@@ -42,6 +48,7 @@ export function RangeFilterPopover({
   });
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
   usePopover({ popoverRef: ref, buttonRef, setIsOpen });
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,7 +60,7 @@ export function RangeFilterPopover({
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      onFilterChange(filterName, range);
+      onFilterChange(filterType, filterName, range);
     }
   };
 

@@ -15,13 +15,18 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+import { FilterType } from "./types";
 import { usePopover } from "./usePopover";
 
 type Props = {
   filterName: string;
-  filterType: string;
+  filterType: FilterType;
   filterValue: string;
-  onFilterChange: (name: string, value: TextFilter) => void;
+  onFilterChange: (
+    filterType: FilterType,
+    name: string,
+    value: TextFilter
+  ) => void;
   filterProps?: ComponentPropsWithoutRef<"input">;
 };
 
@@ -48,7 +53,7 @@ export function TextFilterPopover({
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      onFilterChange(filterName, value ?? "");
+      onFilterChange(filterType, filterName, value ?? "");
     }
   };
 

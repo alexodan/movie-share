@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table";
 import { RangeFilter } from "@/filters/RangeFilterPopover";
 import { TextFilter } from "@/filters/TextFilterPopover";
+import { FilterType } from "@/filters/types";
 
 import { getColumnFilter } from "./ColumnFilter";
 import { columns } from "./columns";
@@ -74,7 +75,7 @@ const updateUrl = (filterName: string, value: RangeFilter | TextFilter) => {
 };
 
 const getFilterType = (filterName: string) => {
-  if (filterName === "vote_average") {
+  if (filterName === "vote_average" || filterName === "popularity") {
     return "range";
   }
   return "text";
@@ -88,8 +89,6 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-
-  // console.log("columnFilters:", columnFilters);
 
   const table = useReactTable({
     data: movies,
@@ -110,15 +109,17 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
     },
   });
 
+  // TODO: filter using the type not 'prop' in value
   const handleFilterChange = (
+    filterType: FilterType,
     filterName: string,
     value: RangeFilter | TextFilter
   ) => {
-    if (typeof value === "string") {
+    if (filterType === "text") {
       if (value) {
         table.getColumn(filterName)?.setFilterValue(value);
       }
-    } else if ("min" in value && "max" in value) {
+    } else if (filterType === "range") {
       table.getColumn(filterName)?.setFilterValue({
         min: value.min ?? 0,
         max: value.max ?? Number.POSITIVE_INFINITY,
@@ -132,9 +133,9 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
     // apply filters
     const currentSearch = window.location.search;
     const url = new URLSearchParams(currentSearch);
-    console.log("start applying filters..........");
     for (const [name, value] of url.entries()) {
       const filterType = getFilterType(name);
+      console.log('------:', name, value, filterType);
       if (filterType === "range") {
         table
           .getColumn(name)
@@ -146,7 +147,6 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
         table.getColumn(name)?.setFilterValue(value);
       }
     }
-    console.log("finished applying filters..........");
   }, [table]);
 
   return (
@@ -183,22 +183,21 @@ export function MoviesTable({ movies }: { movies: MovieResponse[] }) {
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
+                  const { id, isPlaceholder, column, getContext } = header;
                   return (
-                    <TableHead key={header.id} className="p-4 pl-0 first:pl-4">
-                      {header.isPlaceholder
+                    <TableHead key={id} className="p-4 pl-0 first:pl-4">
+                      {isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
+                            column.columnDef.header,
+                            getContext()
                           )}{" "}
-                      {header.column.getCanFilter() &&
+                      {column.getCanFilter() &&
                         getColumnFilter({
-                          filterName: header.column.id,
-                          filterType:
-                            // @ts-expect-error need to figure out the declare module part
-                            header.column.columnDef.meta?.filterType as string,
-                          filterValue: header.column.getFilterValue(),
-                          handleFilterChange,
+                          filterName: column.id,
+                          filterType: column.columnDef.meta?.filterType,
+                          filterValue: column.getFilterValue(),
+                          handleFilterChange: handleFilterChange,
                         })}
                     </TableHead>
                   );
